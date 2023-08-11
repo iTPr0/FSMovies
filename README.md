@@ -1,4 +1,4 @@
-# Web App de Filmes e Séries
+# <p align="center">Web App de Filmes e Séries</p>
 
 Este é um projeto de aplicativo web que exibe uma lista de filmes e séries populares usando a API do The Movie Database (TMDb). A aplicação apresenta uma interface simples e elegante para navegar pelos filmes e séries mais populares, com a capacidade de ver detalhes e sinopses em um modal.
 
