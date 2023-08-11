@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <!-- METAS -->
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TITLE -->
+    <title id="webTitle">Filmes e Séries</title>
+    <!-- LINKS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="embedWarezCdn"></div>
+
+<main>
+    <section class="media-section" id="filmes-section">
+        <h2>Filmes</h2>
+        <div class="media-container" id="filmes-container">
+            <!-- Cards de filmes serão adicionados aqui pelo JavaScript -->
+        </div>
+    </section>
+
+    <section class="media-section" id="series-section">
+        <h2>Séries</h2>
+        <div class="media-container" id="series-container">
+            <!-- Cards de séries serão adicionados aqui pelo JavaScript -->
+        </div>
+    </section>
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-content">
+        <button id="close-modal-btn">Fechar</button>
+        <h2 id="modal-title"></h2>
+        <p id="modal-overview"></p>
+        <iframe id="modal-video" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const tmdbApiKey = 'f64da833f6137a2f15cf5d01ef3607ef'; // Substitua pela sua chave de API do TMDb
+        const warezApiKey = '6d326c6165f963f78b528d76e49f358c'; // Substitua pela sua chave de API da WarezCDN
+
+        const mediaContainer = document.querySelector('.media-container');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalTitle = document.getElementById('modal-title');
+        const modalOverview = document.getElementById('modal-overview');
+        const modalVideo = document.getElementById('modal-video');
+
+        async function fetchPopularMovies() {
+            try {
+                const response = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${tmdbApiKey}&language=pt-BR`);
+                if (!response.ok) {
+                    throw new Error(`Error fetching popular movies data. Status: ${response.status}`);
+                }
+                const data = await response.json();
+                return data.results;
+            } catch (error) {
+                console.error("Error fetching popular movies data:", error);
+                return [];
+            }
+        }
+
+        async function fetchMedia() {
+            try {
+                const popularMovies = await fetchPopularMovies();
+
+                popularMovies.forEach(async movie => {
+                    const response = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${tmdbApiKey}&language=pt-BR`);
+                    if (!response.ok) {
+                        throw new Error(`Error fetching movie data. Status: ${response.status}`);
+                    }
+                    const data = await response.json();
+
+                    const mediaCard = document.createElement('div');
+                    mediaCard.classList.add('media-card');
+
+                    const mediaPoster = document.createElement('img');
+                    mediaPoster.src = `https://image.tmdb.org/t/p/original${data.poster_path}`;
+                    mediaPoster.alt = 'Poster da Mídia';
+
+                    const detailsBtn = document.createElement('button');
+                    detailsBtn.classList.add('details-btn');
+                    detailsBtn.textContent = 'Detalhes';
+
+                    detailsBtn.addEventListener('click', async () => {
+                        modalOverlay.style.display = 'flex';
+                        modalTitle.textContent = data.title;
+                        modalOverview.textContent = data.overview;
+
+                        try {
+                            const imdbResponse = await fetch(`https://api.themoviedb.org/3/movie/${data.id}/external_ids?api_key=${tmdbApiKey}`);
+                            if (!imdbResponse.ok) {
+                                throw new Error(`Error fetching IMDb data. Status: ${imdbResponse.status}`);
+                            }
+                            const imdbData = await imdbResponse.json();
+                            const imdbID = imdbData.imdb_id;
+
+                            modalVideo.src = `https://embed.warezcdn.net/filme/${imdbID}`;
+                        } catch (error) {
+                            console.error("Error fetching IMDb data:", error);
+                            modalVideo.src = ''; // Limpa o src para evitar a exibição de um vídeo incorreto
+                        }
+                    });
+
+                    mediaCard.appendChild(mediaPoster);
+                    mediaCard.appendChild(detailsBtn);
+
+                    mediaContainer.appendChild(mediaCard);
+                });
+            } catch (error) {
+                console.error("Error fetching media data:", error);
+            }
+        }
+
+        fetchMedia();
+
+        closeModalBtn.addEventListener('click', () => {
+            modalOverlay.style.display = 'none';
+            modalVideo.src = ''; // Limpa o src para interromper a reprodução do vídeo
+        });
+    });
+</script>
+
+</body>
+</html>
